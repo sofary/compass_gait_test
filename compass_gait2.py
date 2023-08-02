@@ -17,7 +17,17 @@ bet = 1
 l = a+b
 g = 9.81# ускорение свободного падения
 
+#считаем число раз смены ноги
 flag = 0
+
+def full_energy(y):
+	#при ударе теряется энергия
+	alpha = (y[1]-y[0])/2
+	M = np.array([[bet**2, -(1+bet)*bet*np.cos(2*alpha)],[-(1+bet)*bet*np.cos(2*alpha), (1+bet)**2*(mu+1) +1]])*m*a**2
+	q_dot = np.array([y[2],y[3]])
+	T = 1/2*((np.transpose(q_dot)).dot(M)).dot(q_dot)
+	P = (m*(a+l) + m_h*l)*g*np.cos(2*np.pi - y[1]) - m*g*np.cos(2*np.pi +y[0]-2*y[1])	
+	return P+T	
 
 def one_leg_phase(t, y_tmp): 
     #умножаю на матрицу перехода после смены опорной ноги число раз -- flag
