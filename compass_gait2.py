@@ -2,6 +2,7 @@ import numpy as np
 from numpy.linalg import inv as inv
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
+from celluloid import Camera
 
 
 #Параметры системы
@@ -13,12 +14,10 @@ l = a + b
 bet = m/M_big
 mu = a/l
 v = b/l 
-alpha = np.pi/6
-
+alpha = np.pi/12
 g = 9.81
 flag = 0
 	
-
 def one_leg_phase(t, y_tmp): 
     res = [0,0,0,0]
     y = y_tmp
@@ -35,25 +34,20 @@ def one_leg_phase(t, y_tmp):
     res[3] = float(tmp_right_side[1])
     return res
 
-
-
 def hit_detection(t,y):
     return 2*alpha+y[0]+y[1]-4*np.pi
 
-	
-
-y_0 = np.array([np.pi*2 - np.pi/3, np.pi*2 - np.pi/8, 0, 0])
-
+#y_0 = np.array([np.pi*2 - np.pi/6, np.pi*2 - np.pi/6, 0.01, 0.01])
+y_0 = np.array([ -310/180*np.pi, 140/180*np.pi, 0, 0])
 t_start = 0
 t_end = 4
 
 
-y_sol_total0 = []
-y_sol_total1 = []
-y_sol_total2 = []
-y_sol_total3 = []
-interraotion_t = []
-
+y_sol_total0 = [y_0[0]]
+y_sol_total1 = [y_0[1]]
+y_sol_total2 = [y_0[2]]
+y_sol_total3 = [y_0[3]]
+interraotion_t = [0]
 hit_t = []
 
 while True:
@@ -62,38 +56,30 @@ while True:
     if len(sol.t_events[0]) < 1:
         for i in range(0,len(sol.y[1])):
             if t_start <= sol.t[i] and sol.t[i] <= t_end:
-                # if flag % 2 == 0:
                 y_sol_total0.append(sol.y[0][i])
                 y_sol_total1.append(sol.y[1][i])
-                # else:
-                #     y_sol_total0.append(sol.y[1][i])
-                #     y_sol_total1.append(sol.y[0][i])
                 y_sol_total2.append(sol.y[2][i])
                 y_sol_total3.append(sol.y[3][i])
                 interraotion_t.append(sol.t[i])
         break
 
     for i in range(0, len(sol.y[1])):
-        if sol.t[i]<=sol.t_events[0][0]:
-            # if flag % 2 == 0:   
+        if sol.t[i]<=sol.t_events[0][0]: 
             y_sol_total0.append(sol.y[0][i])
             y_sol_total1.append(sol.y[1][i])
-            # else:
-            #     y_sol_total0.append(sol.y[1][i])
-            #     y_sol_total1.append(sol.y[0][i])
             y_sol_total2.append(sol.y[2][i])
             y_sol_total3.append(sol.y[3][i])
             interraotion_t.append(sol.t[i])
 
     flag += 1
-    if abs(t_start - sol.t_events[0][0]) < 0.01 or abs(y_sol_total3[-1])>3 or abs(y_sol_total2[-1])>3:
+    if abs(t_start - sol.t_events[0][0]) < 0.01 or abs(y_sol_total3[-1])>5 or abs(y_sol_total2[-1])>5:
         print("----")
         break
     t_start = sol.t_events[0][0]
     hit_t.append(t_start)
 
     #преобразование координат при смене ноги
-    y_0 = np.array([y_sol_total0[-1], y_sol_total1[-1], y_sol_total2[-1], y_sol_total3[-1]])#sol.y[:, -1]
+    y_0 = np.array([y_sol_total0[-1], y_sol_total1[-1], y_sol_total2[-1], y_sol_total3[-1]])
     fi = y_0[1]-y_0[0]
     v_minus = np.array([[-bet*v*mu + (2*bet*v+1)*np.cos(fi), -bet*v*mu],[-bet*v*mu, 0]])
     v_plus = np.array([[bet*v**2 + 1 + bet - bet*mu*np.cos(fi), bet*v**2 - bet*v*np.cos(fi)],[-bet*v*np.cos(fi), bet*v**2]])
@@ -101,24 +87,54 @@ while True:
     Up_part = np.array([[0,1,0,0],[1,0,0,0]])
     J = np.concatenate([Up_part, K])
     y_0 =  np.dot(J,y_0)
-    h=1
 
 print(len(interraotion_t))
+h=1
 #Графики
-fig1, axs = plt.subplots(nrows= 1 , ncols= 2 )
-fig1. suptitle('tetta st                  /                    tetta sw')
-axs[0].plot(interraotion_t, y_sol_total0)
-axs[1].plot(interraotion_t, y_sol_total1)
+# fig1, axs = plt.subplots(nrows= 1 , ncols= 2 )
+# fig1. suptitle('tetta st                  /                    tetta sw')
+# axs[0].plot(interraotion_t, y_sol_total0)
+# axs[1].plot(interraotion_t, y_sol_total1)
 
 
-fig2, axs = plt.subplots(nrows= 1 , ncols= 2 )
-fig2. suptitle('tetta st dot (tetta st)                  /             tetta sw dot (tetta sw)')
-axs[0].plot(y_sol_total0, y_sol_total2)
-axs[1].plot(y_sol_total1, y_sol_total3)
+# fig2, axs = plt.subplots(nrows= 1 , ncols= 2 )
+# fig2. suptitle('tetta st dot (tetta st)                  /             tetta sw dot (tetta sw)')
+# axs[0].plot(y_sol_total0, y_sol_total2)
+# axs[1].plot(y_sol_total1, y_sol_total3)
 
-fig3, axs = plt.subplots(nrows= 1 , ncols= 2 )
-fig3. suptitle('d tetta st                  /                     d tetta sw')
-axs[0].plot(interraotion_t, y_sol_total2)
-axs[1].plot(interraotion_t, y_sol_total3)
+# fig3, axs = plt.subplots(nrows= 1 , ncols= 2 )
+# fig3. suptitle('d tetta st                  /                     d tetta sw')
+# axs[0].plot(interraotion_t, y_sol_total2)
+# axs[1].plot(interraotion_t, y_sol_total3)
+f=1
+t0 = 20
+x0 = 20
+t = np.linspace(0, 100, 100)
 
-plt.show()
+
+fig = plt.figure()
+ 
+camera = Camera(fig)
+for i in range(len(y_sol_total0)):
+    shift0 = x0 - t0*np.tan(np.pi - y_sol_total0[i])
+    shift1 = x0 - t0*np.tan(np.pi - y_sol_total1[i])
+    pp = plt.plot(t, t*np.tan(np.pi - alpha),'r--', t, t*np.tan(np.pi - y_sol_total0[i])+shift0,'b-', t, t*np.tan(np.pi - y_sol_total1[i]) + shift1,'g-')
+    plt.xlim([0, 80])
+    plt.ylim([-80, 80])
+    plt.legend(pp, ['number of iteration{}'.format(i)])
+    camera.snap()
+ 
+animation = camera.animate()
+animation.save('walk.gif', writer = 'imagemagick')
+
+
+
+# for i in range(len(y_sol_total0)):
+#     shift0 = x0 - t0*np.tan(np.pi - y_sol_total0[i])
+#     shift1 = x0 - t0*np.tan(np.pi - y_sol_total1[i])
+#     plt.figure(i)
+#     plt.plot(t, t*np.tan(np.pi - alpha),'r--', t, t*np.tan(np.pi - y_sol_total0[i])+shift0,'b-', t, t*np.tan(np.pi - y_sol_total1[i]) + shift1,'g-')
+#     plt.xlim([0, 80])
+#     plt.ylim([-80, 80])
+#     plt.savefig('graph{}.png'.format(i))
+#plt.show()
